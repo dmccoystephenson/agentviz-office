@@ -11,29 +11,41 @@ note at your door.
 One of the [agentviz](https://github.com/dmccoystephenson/agentviz) family:
 ten views of the same feed.
 
-![The whole office floor from the demo feed: five pods, two leads with subagent lanes, and one session waiting at the owner's door](docs/media/hero.png)
-*The whole floor (demo feed). Two leads (Wren, Otto) with 5 and 6 subagents,
-a solo worker and a stalled thinker in `engine`, an idle and an offline desk
-in `home`, and Thistle at the owner's door with an orange trail back to its
-desk in `game`.*
+![The whole office floor from the demo feed: seven pods, two leads with subagent lanes, and two sessions waiting at the owner's door](docs/media/hero.png)
+*The whole floor (demo feed). Two leads (Wren, Otto) with 5 and 7 subagents,
+a reader and a web surfer in `docs`, a stalled session (Patch) in `game`, and
+Thistle and Juniper at the owner's door with orange trails back to their
+desks.*
 
 ## Run
 
+Needs Python 3.8 or newer and nothing else:
+
 ```bash
+git clone https://github.com/dmccoystephenson/agentviz-office
+cd agentviz-office
 python3 -m vendor.agentfeed serve --web web --port 8841            # your live sessions
 python3 -m vendor.agentfeed serve --web web --port 8841 --fixture  # the demo feed
 ```
 
-Open <http://127.0.0.1:8841/> (the server binds 127.0.0.1 only). Query
+Open <http://127.0.0.1:8841/> (the server binds 127.0.0.1 only and refuses
+non-local `Host` headers). Live mode reads your Claude Code session files
+under `~/.claude` and shows session names, states, git branches, tool names
+and short labels (a file's basename, a Bash command's own description, a web
+host, a subagent's description), never file contents, commands or prompts;
+see the agentviz [SECURITY.md](https://github.com/dmccoystephenson/agentviz/blob/main/SECURITY.md). Query
 options: `?fixture=1` (demo feed), `?demo=1` (demo feed with scripted
 changes, to watch people walk and screens change), `?night=1` / `?night=0`
 (pin night or day; otherwise the real sun by your local clock), `?fps=1`
 (frame stats), `?quality=0|1|2`.
 
 Drag to orbit, right-drag or two fingers to pan, wheel or pinch to zoom. Tap a
-person or a desk for its card (a bottom sheet on a phone). The orange
-**need you** chip flies the camera to the owner's door and cycles through
-whoever is waiting; the house button recentres; **?** opens the legend.
+person or a desk for its card (a bottom sheet on a phone; swipe it down or
+tap the cross to close). The orange **need you** chip names who is waiting
+and why (a question, or a permission prompt), flies the camera to the
+owner's door and cycles through them; the house button recentres; **?**
+opens the legend. If the feed stops answering, a banner says so and the last
+snapshot stays; with no sessions at all, a hint says how to start.
 
 ## What you are looking at
 
@@ -51,10 +63,11 @@ whoever is waiting; the house button recentres; **?** opens the legend.
 | The lead standing, pointing at its team; notes flying in arcs to each active lane | `delegate` | [delegate](docs/media/delegate.png) |
 | Leaning back, hands behind the head, thought dots rising, slow wave on screen | `think` | [stalled](docs/media/stalled.png) |
 | Hand on the mouse, other on the chin, amber bars | `other` | |
-| At the **OWNER** office door, sticky note raised, pulsing orange rings and beam, orange dashes from the desk; the door frame glows; "needs you" label and chip | `waiting`: the session needs you | [waiting](docs/media/waiting.png) |
+| At the **OWNER** office door, sticky note raised, pulsing orange rings and beam, orange dashes from the desk; the door frame glows; label and chip say why | `waiting`: the session needs you | [waiting](docs/media/waiting.png) |
+| A "?" on the raised sticky note / a padlock on it | waiting on a question / on a permission prompt | [question](docs/media/question.png) |
 | Lamp off, slumped, Z's drifting up | `idle` (or `dim`) | [idle-offline](docs/media/idle-offline.png) |
 | Empty desk, jacket on the chair, screen off | `offline` | [idle-offline](docs/media/idle-offline.png) |
-| Monitor flashing red with a warning triangle, red light on the desk | `stalled` (busy, nothing written for 5 min) | [stalled](docs/media/stalled.png) |
+| Monitor flashing red with a warning triangle, red light on the desk | `stalled`: a session busy with nothing written for 5 min, or a subagent quiet that long without finishing | [stalled](docs/media/stalled.png) |
 | Chair pushed back, screen dim, sitting back | a resting subagent | [resting](docs/media/resting.png) |
 | Desks rising from / sinking into the floor | a subagent appearing / leaving the feed | |
 
@@ -68,9 +81,10 @@ out to the window for `web` and back, Wren alternates between reading and
 delegating (notes fly to its lanes), and a session gets up and walks to the
 owner's door.*
 
-![A lead and six subagents in the plugin-site pod](docs/media/lead-pod.png)
-*Otto's pod: the lead at the front running a terminal, six subagent desks
-behind it, each with its lane label and screen (edit, read, run, web).*
+![A lead and seven subagents in the plugin-site pod](docs/media/lead-pod.png)
+*Otto's pod: the lead at the front running a terminal, seven subagent desks
+behind it, each with its lane label and screen (edit, read, run, web); the
+stalled lane's monitor flashes red.*
 
 ![Wren delegating: standing and pointing, with arcs to each lane](docs/media/delegate.png)
 *Wren delegating: standing behind the lead desk and pointing at the team;
@@ -80,12 +94,16 @@ notes arc to each active lane. The resting lane's chair is pushed back.*
 *Waiting on you: Thistle at the owner's door, sticky note up, rings pulsing,
 the door frame and sign burning orange, dashes leading back to its desk.*
 
-![The home pod: Lantern idle at a dark desk, Tally's empty chair with a jacket](docs/media/idle-offline.png)
+![Juniper and Thistle at the owner's door: a question mark on one sticky note, a padlock on the other](docs/media/question.png)
+*Why they wait: Juniper's note carries a "?" (it asked a question), Thistle's
+a padlock (a permission prompt).*
+
+![The ~ pod: Lantern idle at a dark desk, Tally's empty chair with a jacket](docs/media/idle-offline.png)
 *Idle and offline: Lantern slumped at a dark desk with Z's; Tally's desk
 empty with a jacket left on the chair.*
 
-![Scout's monitor flashing red](docs/media/stalled.png)
-*Stalled: Scout has been busy with nothing written for over five minutes, so
+![Patch's monitor flashing red](docs/media/stalled.png)
+*Stalled: Patch has been busy with nothing written for over five minutes, so
 the monitor flashes red with a warning triangle.*
 
 ![A resting subagent: chair pushed back, screen dim](docs/media/resting.png)
@@ -114,23 +132,39 @@ their desks and screens glow.*
 ## Build and test
 
 ```bash
-scene/build.sh                                   # emsdk 6.0.11 + Strata 0.10.0 -> web/office-engine.{js,wasm}
-python3 -m unittest discover -s tests            # serves the fixture; page, assets and feed
-NODE_PATH=/root/arcade-watch/node_modules node tests/smoke.cjs        # headless Chromium; saves docs/media/screenshot.png
-NODE_PATH=/root/arcade-watch/node_modules node tests/screenshots.cjs  # every image above (or name some: hero phone demo)
+python3 -m unittest discover -s tests       # serves the fixture; page, assets, feed, vendored PINs
+npm ci && npx playwright install chromium   # Playwright 1.61.1, for the browser tests
+pip install -r requirements-dev.txt         # Pillow, for the GIF
+npm run smoke                               # headless Chromium on the demo feed; saves docs/media/screenshot.png
+npm run screenshots                         # every image above (or some: npm run screenshots -- hero phone demo)
+EMSDK=/path/to/emsdk vendor/agentviz-kit/scene/build-scene.sh scene/kit.conf   # rebuild web/office-engine.*
 ```
 
-The built engine files are committed, so serving needs only Python 3.8+. The
-tests use port 8941. `vendor/agentfeed/` is vendored from agentviz
-(`tools/vendor-feed.sh`); do not edit it here.
+The built engine files are committed, so serving needs only Python. Tests
+use port 8911 (`OFFICE_TEST_PORT` overrides). `vendor/agentfeed/`,
+`vendor/agentviz-kit/` and `web/agentviz-*` come from
+[agentviz](https://github.com/dmccoystephenson/agentviz) (`tools/vendor-kit.sh`);
+do not edit them here.
 
 ## How it works
 
-`web/page.js` polls `/api/agents` every 2 s. `web/office.js` keys everything
-by id, lays out pods in two columns either side of a corridor that leads to
-the owner's office, gives each subagent a stable desk slot, eases desks to
-new positions and walks people along the aisles (out between the desk rows,
-down the pod's aisle, then the corridor or the window aisle), with a short
-dwell so a quick tool switch does not send anyone back and forth. Each frame
-it writes one float buffer to the scene; `scene/main.cpp` draws it with
-Strata's primitives, lines, points and point lights.
+The feed client, the HUD (chips, the selected-agent card and bottom sheet,
+the banner), world labels, tap picking and the page-to-engine data format are
+the shared agentviz kit (docs/KIT.md in agentviz). On top of it,
+`web/office-model.js` keys everything by id, lays out pods in two columns
+either side of a corridor that leads to the owner's office, gives each
+subagent a stable desk slot and eases desks to new positions;
+`web/office-walk.js` decides each person's pose, screen and place and walks
+them along the aisles (out between the desk rows, down the pod's aisle, then
+the corridor or the window aisle), with a short dwell so a quick tool switch
+does not send anyone back and forth. Each frame `web/office-frame.js` packs
+the scene in the agentviz wire format; `scene/main.cpp` decodes it with
+`agentviz.h` and draws it with Strata's primitives, lines, points and point
+lights (`room.h`, `desk.h`, `person.h`, `trails.h`).
+
+## Licence
+
+Code: [MIT](LICENSE). Screenshots and GIFs in `docs/media/`:
+[CC0 1.0](LICENSE-media). The committed engine bundles Strata (MIT) and its
+libraries, and the Emscripten runtime: see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

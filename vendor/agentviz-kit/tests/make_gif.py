@@ -1,5 +1,6 @@
-"""Frames (PNG, in name order) -> an optimised GIF, with Pillow.
-   python3 tests/make_gif.py <frames dir> <out.gif> <fps> [width]"""
+"""Frames (PNG, in name order) -> an optimised GIF, with Pillow (ffmpeg is not
+needed). pip install -r requirements-dev.txt brings Pillow.
+   python3 make_gif.py <frames dir> <out.gif> <fps> [width]"""
 import os
 import sys
 
@@ -8,6 +9,8 @@ from PIL import Image
 
 def main(src, out, fps, width=720):
     names = sorted(n for n in os.listdir(src) if n.endswith(".png"))
+    if not names:
+        raise SystemExit("make_gif: no .png frames in %s" % src)
     frames = []
     for n in names:
         im = Image.open(os.path.join(src, n)).convert("RGB")
