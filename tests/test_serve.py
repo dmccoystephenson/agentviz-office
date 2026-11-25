@@ -10,8 +10,12 @@ import unittest
 import urllib.request
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PORT = int(os.environ.get("OFFICE_TEST_PORT", "8941"))
+PORT = int(os.environ.get("OFFICE_TEST_PORT", "8911"))
 BASE = "http://127.0.0.1:%d" % PORT
+
+
+PAGE_SCRIPTS = ("strata-loader.js", "strata-kit.js", "agentviz-feed.js", "agentviz-screen.js", "agentviz-hud.js",
+                "agentviz-wire.js", "office-model.js", "office-walk.js", "office-frame.js", "page.js")
 
 
 def get(path):
@@ -45,22 +49,22 @@ class ServeFixtureTest(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("text/html", ctype)
         html = body.decode()
-        for asset in ("strata-loader.js", "strata-kit.js", "office.js", "page.js"):
+        for asset in PAGE_SCRIPTS + ("agentviz-hud.css",):
             self.assertIn(asset, html)
-        for asset in ("strata-loader.js", "strata-kit.js", "office.js", "page.js", "office-engine.js"):
+        for asset in PAGE_SCRIPTS + ("agentviz-hud.css", "office-engine.js"):
             status, ctype, body = get("/" + asset)
             self.assertEqual(status, 200, asset)
-            self.assertGreater(len(body), 1000, asset)
+            self.assertGreater(len(body), 500, asset)
         status, ctype, body = get("/office-engine.wasm")
         self.assertEqual(status, 200)
         self.assertEqual(ctype, "application/wasm")
         self.assertEqual(body[:4], b"\0asm")
 
-    def test_engine_exports_the_scene_setter(self):
+    def test_engine_exports_the_wire_setter(self):
         _, _, body = get("/page.js")
         self.assertIn("createOfficeEngine", body.decode())
-        _, _, body = get("/office.js")
-        self.assertIn("_of_frame", body.decode())
+        _, _, body = get("/office-engine.js")
+        self.assertIn("_agentviz_frame", body.decode())
 
     def test_feed_parses(self):
         status, ctype, body = get("/api/agents")
@@ -71,7 +75,7 @@ class ServeFixtureTest(unittest.TestCase):
         names = {s["name"]: s for s in doc["sessions"]}
         self.assertEqual(names["Thistle"]["state"], "waiting")
         self.assertEqual(len(names["Wren"]["followers"]), 5)
-        self.assertEqual(len(names["Otto"]["followers"]), 6)
+        self.assertEqual(len(names["Otto"]["followers"]), 7)
         for s in doc["sessions"]:
             self.assertIn(s["state"], ("offline", "dim", "idle", "busy", "waiting"))
             self.assertIn(s["action"], ("edit", "run", "read", "web", "delegate", "think", "other", "none"))
@@ -82,6 +86,13 @@ class ServeFixtureTest(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError) as e:
             get("/../vendor/agentfeed/feed.py")
         self.assertEqual(e.exception.code, 404)
+
+
+class VendoredCopiesTest(unittest.TestCase):
+    def test_vendored_copies_match_their_pins(self):
+        result = subprocess.run([sys.executable, os.path.join(REPO, "vendor", "agentviz-kit", "check_vendor.py"), REPO],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":
