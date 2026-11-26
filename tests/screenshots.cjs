@@ -27,6 +27,9 @@ window.__shots = {
   pod(id, c) { const p = window.__office.pods.get(id).cur;
     this.cam(Object.assign({tx: (p.x0 + p.x1) / 2, ty: 0.5, tz: (p.z0 + p.z1) / 2 + 0.5}, c)); },
   draw() { window.__page.kit.drive(window.__office.lastT || 0); },
+  // A real tap on an agent (the kit's tap path), as a finger would.
+  tap(id) { this.draw(); const k = window.__page.kit, o = window.__office, w = o.where(o.agents.get(id));
+    const q = k.project(w.x, w.y - 0.45, w.z), r = k.canvas.getBoundingClientRect(); k.tapAt(q.x + r.left, q.y + r.top); },
 };`;
 
 async function openPage(browser, server, night, options) {
@@ -103,6 +106,6 @@ h.run("screenshots", {repo: REPO, port: PORT}, async ({server, browser}) => {
   await desktopStills(browser, server);
   await single(browser, server, "night", 1, DESKTOP, "window.__page.fit(true); window.__shots.cam({yaw: Math.PI / 2 - 0.7, pitch: 0.72})");
   await single(browser, server, "phone", 0, PHONE,
-    "window.__page.fit(true); window.__shots.cam({tz: window.__page.kit.cam.tz + 5}); window.__page.select('demo-lead-a', false)");
+    "window.__page.fit(true); window.__shots.tap('demo-lead-a')");
   await demoGif(browser, server);
 });
