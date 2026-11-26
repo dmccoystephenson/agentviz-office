@@ -31,23 +31,9 @@
   }
 
   /* ------------------------------------------------------------ camera */
-  // The camera the engine builds (Strata kit sk_frame: an orbit about the
-  // target, 50 degree vertical field of view), here so a view can be fitted
-  // before it is drawn. Keep in step with strata_kit.h if the kit changes.
-  const FOV_TAN = Math.tan(25 * Math.PI / 180);
-  function projectWith(c, x, y, z, W, H) {
-    const cp = Math.cos(c.pitch);
-    const ex = c.tx + c.dist * cp * Math.cos(c.yaw), ey = c.ty + c.dist * Math.sin(c.pitch), ez = c.tz + c.dist * cp * Math.sin(c.yaw);
-    let fx = c.tx - ex, fy = c.ty - ey, fz = c.tz - ez;
-    const fl = Math.hypot(fx, fy, fz); fx /= fl; fy /= fl; fz /= fl;
-    const rl = Math.hypot(fz, fx), rx = -fz / rl, rz = fx / rl;            // forward x up
-    const ux = -rz * fy, uy = rz * fx - rx * fz, uz = rx * fy;             // right x forward
-    const px = x - ex, py = y - ey, pz = z - ez;
-    const depth = px * fx + py * fy + pz * fz;
-    if (depth <= 0.01) return null;
-    const sx = (px * rx + pz * rz) / (depth * FOV_TAN * (W / H)), sy = (px * ux + py * uy + pz * uz) / (depth * FOV_TAN);
-    return {x: (sx * 0.5 + 0.5) * W, y: (0.5 - sy * 0.5) * H};
-  }
+  // The engine's camera maths (Strata kit sk_frame) comes from the agentviz
+  // kit, so a view can be fitted before it is drawn.
+  const {projectWith, aim, fitPoints, sameView} = AgentvizScreen;
 
   // The part of the canvas nothing covers: below the top bar and, with
   // `panel`, above the bottom sheet (phone) or right of the card (desktop).
@@ -64,47 +50,20 @@
     return r;
   }
 
-  // Moves the camera target so world point (x, y, z) lands on screen (sx, sy):
-  // a few Newton steps on the ground-plane Jacobian.
-  function aim(c, x, y, z, sx, sy, W, H) {
-    for (let i = 0; i < 6; i++) {
-      const q = projectWith(c, x, y, z, W, H);
-      const qx = projectWith(Object.assign({}, c, {tx: c.tx + 1}), x, y, z, W, H);
-      const qz = projectWith(Object.assign({}, c, {tz: c.tz + 1}), x, y, z, W, H);
-      if (!q || !qx || !qz) return c;
-      const a = qx.x - q.x, b = qz.x - q.x, d = qx.y - q.y, e = qz.y - q.y, det = a * e - b * d;
-      if (Math.abs(det) < 1e-6) return c;
-      const dx = sx - q.x, dy = sy - q.y;
-      c.tx += (e * dx - b * dy) / det;
-      c.tz += (a * dy - d * dx) / det;
-    }
-    return c;
-  }
-
   // The whole floor, walls and the OWNER sign included, as large as it fits
   // in the free part of the screen, on phones and desktops alike.
   function fitView() {
-    const f = office.bounds(), fr = freeRect(false), W = fr.W, H = fr.H;
+    const f = office.bounds(), fr = freeRect(false);
     const pts = [];
     for (const x of [f.x0, f.x1]) for (const z of [f.zN, f.zS]) pts.push([x, 0, z]);
     for (const x of [f.x0, f.x1]) pts.push([x, 2.6, f.zN]);
     pts.push([f.doorX, 3.6, f.oz1]);
     // Portrait screens look down more steeply, so the floor's depth fills the height.
     // and turn less, so the floor's rectangle wastes less of a narrow screen.
-    const portrait = W / H < 0.8, pitch = portrait ? PORTRAIT_PITCH : DEFAULT_PITCH;
+    const portrait = fr.W / fr.H < 0.8, pitch = portrait ? PORTRAIT_PITCH : DEFAULT_PITCH;
+    // fitPoints keeps the yaw and pitch and centres the box by sliding the target.
     const c = {yaw: portrait ? PORTRAIT_YAW : DEFAULT_YAW, pitch, dist: 60, tx: (f.x0 + f.x1) / 2, ty: 0, tz: (f.zN + f.zS) / 2};
-    for (let i = 0; i < 40; i++) {
-      const qs = pts.map((p) => projectWith(c, p[0], p[1], p[2], W, H));
-      if (qs.some((q) => !q)) { c.dist *= 1.3; continue; }
-      const bx0 = Math.min(...qs.map((q) => q.x)), bx1 = Math.max(...qs.map((q) => q.x));
-      const by0 = Math.min(...qs.map((q) => q.y)), by1 = Math.max(...qs.map((q) => q.y));
-      const k = Math.max((bx1 - bx0) / (fr.x1 - fr.x0), (by1 - by0) / (fr.y1 - fr.y0));
-      c.dist = Math.min(140, Math.max(8, c.dist * Math.pow(k, 0.7)));
-      // Centre the box: shift the target by the box's offset, read at the floor's middle.
-      const mid = [(f.x0 + f.x1) / 2, 0, (f.zN + f.zS) / 2], m = projectWith(c, mid[0], mid[1], mid[2], W, H);
-      if (m) aim(c, mid[0], mid[1], mid[2], m.x + (fr.x0 + fr.x1) / 2 - (bx0 + bx1) / 2, m.y + (fr.y0 + fr.y1) / 2 - (by0 + by1) / 2, W, H);
-    }
-    return c;
+    return fitPoints(c, pts, fr, {minDist: 8, maxDist: 140});
   }
   let lastFit = null;
   function fit(instant) { if (office.floor) { lastFit = fitView(); flyTo(lastFit, instant); } }
@@ -112,7 +71,7 @@
   function refitOnResize() {
     const c = kit && kit.cam;
     if (!c || !lastFit || camAnim) return;
-    if (["yaw", "pitch", "dist", "tx", "tz"].every((k) => Math.abs(c[k] - lastFit[k]) < 1e-3)) fit(true);
+    if (sameView(c, lastFit)) fit(true);
   }
   function flyTo(to, instant) {
     if (!kit) return;
@@ -132,10 +91,9 @@
     const w = office.where(a);
     if (!w) return;
     const fr = freeRect(true), base = camAnim ? camAnim.to : kit.cam;
-    const c = Object.assign({}, base, zoom ? {dist: Math.min(base.dist, 16), pitch: Math.max(base.pitch, 0.7)} : {});
-    const y = w.y - 0.45, q = projectWith(c, w.x, y, w.z, fr.W, fr.H), pad = 40;
-    if (!zoom && q && q.x > fr.x0 + pad && q.x < fr.x1 - pad && q.y > fr.y0 + pad && q.y < fr.y1 - pad) return;
-    flyTo(aim(c, w.x, y, w.z, (fr.x0 + fr.x1) / 2, (fr.y0 + fr.y1) / 2 + 20, fr.W, fr.H));
+    const to = AgentvizScreen.reveal(base, [w.x, w.y - 0.45, w.z], fr,
+      zoom ? {set: {dist: Math.min(base.dist, 16), pitch: Math.max(base.pitch, 0.7)}, force: true} : {});
+    if (to) flyTo(to);
   }
   function flyToDoor() {
     const f = office.bounds(), fr = freeRect(true);
@@ -164,23 +122,6 @@
     const anchor = a.loc === "seat" && !a.path ? {x: a.desk.x, y: 1.45, z: a.desk.z - 0.2} : {x: w.x, y: w.y + 0.4, z: w.z};
     return {el, q: kit.project(anchor.x, anchor.y, anchor.z), rank: a.id === selectedId ? 0 : (stalled ? 1 : 3)};
   }
-  // Labels stay on screen and out from under the top bar: one that would sit
-  // under it hides, unless it must show (waiting, selected), then it drops below.
-  function keepClear(items) {
-    const fr = freeRect(false), top = fr.y0 - 4;
-    let pinned = 0;
-    for (const it of items) {
-      // Only labels whose anchor is on screen; the rest fall off the edge as before.
-      if (!it.q || it.el._skW == null || it.q.x < 0 || it.q.x > fr.W || it.q.y < 0 || it.q.y > fr.H) continue;
-      const half = it.el._skW / 2 + 4, h = it.el._skH || 18;
-      it.q = {x: Math.min(Math.max(it.q.x, half), Math.max(half, fr.W - half)), y: it.q.y, w: it.q.w};
-      if (it.q.y - h < top) {
-        // Must show: pin it just below the bar (no stepping up into it), stacked.
-        if (it.rank <= 0) { it.q = {x: it.q.x, y: top + h + (pinned++) * (h + 3), w: it.q.w}; it.tries = 1; } else it.q = null;
-      }
-    }
-    return items;
-  }
   function placeLabels() {
     const items = [];
     labels.begin();
@@ -194,7 +135,9 @@
       items.push({el, q: kit.project((p.cur.x0 + p.cur.x1) / 2, 1.3, p.cur.z0), rank: 2});
     }
     labels.end();
-    StrataKit.placeLabels(keepClear(items));
+    // On screen and clear of the bar, panel and legend; a label that must
+    // show (waiting, selected) drops below the bar instead of hiding.
+    hud.placeLabels(items, {canvas});
   }
 
   /* ------------------------------------------------------------ picking + selection */
@@ -220,6 +163,7 @@
 
   const hud = AgentvizHud.create({
     title: "Agent Office",
+    oneRow: true,
     legend: document.getElementById("legend"),
     buttons: [{icon: "home", label: "Recentre the view", onClick: () => fit(false)}],
     onSelect,
