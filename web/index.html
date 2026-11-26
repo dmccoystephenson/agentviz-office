@@ -21,19 +21,9 @@
   .av-label.idle { opacity: 0.72; }
   /* A stalled agent's label reads red at a glance, lead or subagent. */
   .av-label.stalled { border-color: var(--av-stall); box-shadow: 0 0 0 1px var(--av-stall), 0 0 10px rgba(255, 75, 58, 0.55); }
-  /* Phones: the top bar stays one line. The title is in the tab already;
-     chips tighten and the demo badge shortens. */
-  @media (max-width: 640px) {
-    .av-bar { flex-wrap: nowrap; gap: 4px; }
-    .av-bar .av-chip { padding: 4px 6px; gap: 4px; white-space: nowrap; flex: none; }
-    .av-bar .av-title { display: none; }
-    .av-bar .av-badge { font-size: 0; gap: 0; }
-    .av-bar .av-badge::after { content: "demo"; font-size: 11px; }
-    .av-bar button.av-chip { min-width: 40px; padding: 4px; justify-content: center; }
-  }
   /* Narrow phones: the away count and the demo badge give way to "need you". */
   @media (max-width: 430px) {
-    .av-bar .av-badge, .av-bar > span.av-chip:has(.av-s-offline) { display: none; }
+    .av-one-row .av-badge, .av-one-row .av-count-offline { display: none; }
   }
   .av-legend h3 { margin: 10px 0 6px; font-size: 12px; color: var(--av-muted); text-transform: uppercase; letter-spacing: 0.06em; }
   .av-legend h3:first-child { margin-top: 0; }
