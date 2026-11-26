@@ -13,7 +13,8 @@ ten views of the same feed.
 
 ![The whole office floor from the demo feed: seven pods, two leads with subagent lanes, and two sessions waiting at the owner's door](docs/media/hero.png)
 *The whole floor (demo feed). Two leads (Wren, Otto) with 5 and 7 subagents,
-a reader and a web surfer in `docs`, a stalled session (Patch) in `game`, and
+a reader and a web surfer in `docs`, a stalled session (Patch) in `game` and
+a stalled lane in Otto's pod, both flagged in red, and
 Thistle and Juniper at the owner's door with orange trails back to their
 desks.*
 
@@ -39,9 +40,11 @@ changes, to watch people walk and screens change), `?night=1` / `?night=0`
 (pin night or day; otherwise the real sun by your local clock), `?fps=1`
 (frame stats), `?quality=0|1|2`.
 
-Drag to orbit, right-drag or two fingers to pan, wheel or pinch to zoom. Tap a
-person or a desk for its card (a bottom sheet on a phone; swipe it down or
-tap the cross to close). The orange **need you** chip names who is waiting
+The floor is fitted to the screen, phone or desktop, and refitted when the
+window turns or resizes (until you move the view). Drag to orbit, right-drag
+or two fingers to pan, wheel or pinch to zoom. Tap a person or a desk for its
+card (a bottom sheet on a phone; swipe it down or tap the cross to close); if
+the card would cover who you tapped, the camera slides them clear. The orange **need you** chip names who is waiting
 and why (a question, or a permission prompt), flies the camera to the
 owner's door and cycles through them; the house button recentres; **?**
 opens the legend. If the feed stops answering, a banner says so and the last
@@ -67,7 +70,7 @@ snapshot stays; with no sessions at all, a hint says how to start.
 | A "?" on the raised sticky note / a padlock on it | waiting on a question / on a permission prompt | [question](docs/media/question.png) |
 | Lamp off, slumped, Z's drifting up | `idle` (or `dim`) | [idle-offline](docs/media/idle-offline.png) |
 | Empty desk, jacket on the chair, screen off | `offline` | [idle-offline](docs/media/idle-offline.png) |
-| Monitor flashing red with a warning triangle, red light on the desk | `stalled`: a session busy with nothing written for 5 min, or a subagent quiet that long without finishing | [stalled](docs/media/stalled.png) |
+| Monitor flashing red with a warning triangle, red light on the desk, head in hands; a red "· stalled" label | `stalled`: a session busy with nothing written for 5 min, or a subagent quiet that long without finishing | [stalled](docs/media/stalled.png) |
 | Chair pushed back, screen dim, sitting back | a resting subagent | [resting](docs/media/resting.png) |
 | Desks rising from / sinking into the floor | a subagent appearing / leaving the feed | |
 
@@ -104,7 +107,8 @@ empty with a jacket left on the chair.*
 
 ![Patch's monitor flashing red](docs/media/stalled.png)
 *Stalled: Patch has been busy with nothing written for over five minutes, so
-the monitor flashes red with a warning triangle.*
+the monitor flashes red with a warning triangle, Patch sits with head in
+hands, and the label turns red.*
 
 ![A resting subagent: chair pushed back, screen dim](docs/media/resting.png)
 *A resting subagent (`tests + docs`): chair pushed back, screen dim.*
@@ -115,8 +119,8 @@ subagent lane as a chip you can tap to jump to it.*
 
 <img src="docs/media/phone.png" width="300" alt="Phone portrait with the bottom sheet open">
 
-*A phone (390 x 844, DPR 3): touch orbit and pinch, the card as a bottom
-sheet, compact chips.*
+*A phone (390 x 844, DPR 3) after tapping Wren: the camera slides Wren
+clear of the bottom sheet; the top bar stays on one line.*
 
 ![The floor from the west at a low angle](docs/media/angle-west.png)
 *Another angle: from the west, lower.*

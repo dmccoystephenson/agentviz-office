@@ -80,6 +80,13 @@ inline Arms armsFor(const Desk& g, float t) {
         }
         default: break;
     }
+    // Stalled at the desk: hands clutching the head, leaning in over the red
+    // screen; the raised arms read from behind too.
+    if (g.stalled && sitting(g.pose) && g.pose != P_SLUMP && g.pose != P_REST) {
+        const float sh = 0.012f * std::sin(t * 3.0f + ph);
+        a.lean = 0.14f; a.headDrop = 0.06f; a.binder = false; a.bubble = false;
+        a.set(-0.2f, 1.34f + sh, 0.12f, 0.2f, 1.34f - sh, 0.12f);
+    }
     return a;
 }
 
@@ -211,7 +218,8 @@ inline void drawPerson(Host& h, const Desk& g, float t, float night) {
     if (g.pose == P_ABSENT || g.personAppear <= 0.01f) return;
     const bool sit = sitting(g.pose);
     const Body b = bodyOf(g, sit);
-    const float baseY = sit ? 0.52f : 0.82f;
+    // Seated people breathe: a slow rise and fall, out of step with each other.
+    const float baseY = sit ? 0.52f + 0.012f * std::sin(t * 1.7f + g.own * 23.0f) : 0.82f;
     const Rgb shirt = g.lead ? sessionHue(g.hue, 0.7f, 0.55f) : sessionHue(g.hue, 0.35f, 0.82f);
     const Rgb pants = g.lead ? Rgb{0.12f, 0.13f, 0.18f} : Rgb{0.3f, 0.3f, 0.34f};
     const Arms arms = armsFor(g, t);
